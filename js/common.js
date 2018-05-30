@@ -1,563 +1,510 @@
-$(document).ready(function(){
-	/** 购物车 */
-	$('.cart').mousemove(function(){
-		$(this).find('.cartText').fadeIn(0);
-		$(this).find('.cartCont').fadeIn(0);
-		$(this).find('.cartNum').addClass("huanBg");
-	});
-	$('.cart').mouseleave(function(){
-		$(this).find('.cartText').fadeOut(0);
-		$(this).find('.cartCont').fadeOut(0);
-		$(this).find('.cartNum').removeClass("huanBg");
-	});
-	/**登录菜单*/
-	$(".div_help_user,.m-touxiang").mouseover(function(){
-		if(getCookie("memberName") || getCookie("memberEmail")) {
-			$(".m-top_user").show();
-			$(".ul_top_user").show();
-		}
-	});
-	$(".div_help_user,.m-touxiang").mouseleave(function(){
-		$(".ul_top_user").hide();
-		$(".m-top_user").hide();
-	});
-	$("#close_window").click(function(){
-		$("#window_dialog").hide();
-	});
-	/**导航二级菜单*/
-	$(".erji").hover(function(e) {
-        $(this).children(".m-erjinav").stop().fadeIn(500);
-    }, function(){  
-        setTimeout(function(){
-       	 $(this).children(".m-erjinav").stop().hide();
-        },800);
-	});	
-	$(".m-erjinav").hover(function(e) {
-	      $(this).show();
-	    }, function(){
-			$(this).stop().fadeOut(500);	
-		});
-	$(".erji").siblings().hover(function(e) {
-		$(".m-erjinav").stop().fadeOut(500);
-	    }, function(){
-	});
-});
-
-/**
- * 购物车数量
- */
-function cartSize() {
-	var size = getCookie("cartSize");
-	if(!size)
-		size = getCartSize();
-	if(size && size > 0)
-		$("#cart").addClass("cur");
-	else
-		$("#cart").removeClass("cur");
-}
-function getCartSize() {
-	var size = 0;
-	$.ajax({async : false, url : wbdcnf.base + "/cart/size.jhtml", cache : false, type : "GET", success : function(data) {
-		size = data;
-	}});
-	return size;
-}
-/*弹出层*/
-//显示灰色 jQuery 遮罩层
-function showBg() {
-	var bh = $("body").height();
-	var bw = $("body").width();
-	$("#fullbg").css({
-		"height":bh,
-		"width":bw,
-		"display":"block"
-	});
-	$("#dialog").show();
-}
-
-//关闭灰色 jQuery 遮罩
-function closeBg() {
-	$("#fullbg,#dialog").hide();
-}
-
-/** 首页定制切换 **/
-function ShowPre(o){
-	var that = this;
-	this.box = $("#"+o["box"]);
-	this.btnP = $("#"+o.Pre);
-	this.btnN= $("#"+o.Next);
-	this.v = o.v||1;
-	this.c = 0;
-	var li_node = "li";
-	this.loop = o.loop||false;
-	//循环生成dom
-	if(this.loop){
-		this.li =  this.box.find(li_node);
-		this.box.append(this.li.eq(0).clone(true));
-	};
-	this.li = this.box.find(li_node);
-	this.l = this.li.length;
-	//滑动条件不成立
-	if(this.l<=this.v){
-		this.btnP.hide();
-		this.btnN.hide();
-	};
-	this.deInit = true;
-	this.w = this.li.outerWidth(true);
-	this.box.width(this.w*this.l);
-	this.maxL = this.l - this.v;
-	//要多图滚动 重新计算变量
-	this.s = o.s||1;
-	if(this.s>1){
-		this.w = this.v*this.w;
-		this.maxL = Math.floor(this.l/this.v);
-		this.box.width(this.w*(this.maxL+1));
-		//计算需要添加数量
-		var addNum = (this.maxL+1)*this.v-this.l;
-		var addHtml = "";
-		for(var adN = 0;adN < addNum;adN++){
-			addHtml += "<li class='addBox'><div class='photo'></div><div class='text'></div></li>";
-		};
-		this.box.append(addHtml);
-	};
-	//生成状态图标
-	this.numIco = null;
-	if(o.numIco){
-		this.numIco  = $("#"+o.numIco);
-		var numHtml = "";
-		numL = this.loop?(this.l-1):this.l;
-		for(var i = 0;i<numL;i++){
-			numHtml+="<a href='javascript:void(0);'>"+i+"</a>";
-		};
-		//this.numIco.html(numHtml);
-		this.numIcoLi = this.numIco.find("a");
-		this.numIcoLi.bind("click",function(){
-			if(that.c==$(this).html())return false;
-			that.c=$(this).html();
-			that.c=$(this).attr("data");
-			that.move();
-		});
-	};
-	this.bigBox = null;
-	this.loadNumBox = null;
-	if(o.loadNumBox){
-		this.loadNumBox = $("#"+o.loadNumBox);
-	};
-	//当前序号设置
-	this.allNumBox = null;
-	if(o.loadNumBox){
-		this.allNumBox = $("#"+o.allNumBox);
-		if(o.bBox){
-			var cAll = this.l<10?("0"+this.l):this.l;
-		}else{
-			var cAll = this.maxL<10?("0"+(this.maxL+1)):(this.maxL+1);
-		};
-		this.allNumBox.html(cAll);
-	};
-	//大图按钮点击操作
-	if(o.bBox){
-		this.bigBox = $("#"+o.bBox);
-		this.li.each(function(n){
-			$(this).attr("num",n);
-			var cn = (n+1<10) ? ("0"+(n+1)):n+1;
-			$(this).find(".text").html(cn);
-		});
-		this.loadNum = 0;
-		this.li.bind("click",function(){
-			if(that.loadNum==$(this).attr("num"))return false;
-			var test = null;
-			if(that.loadNum>$(this).attr("num")){
-				test = "pre";
-			};
-			that.loadNum = $(this).attr("num");
-
-			that.loadImg(test);
-		});
-		that.loadImg();
-		if(o.bNext){
-			that.bNext = $("#"+o.bNext);
-			that.bNext.bind("click",function(){
-				that.loadNum<that.l-1 ?that.loadNum++:that.loadNum=0;
-				that.loadImg();
-			});
-		};
-		if(o.bPre){
-			that.bPre = $("#"+o.bPre);
-			that.bPre.bind("click",function(){
-				that.loadNum> 0? that.loadNum--:that.loadNum=that.l-1 ;
-				that.loadImg("pre");
-			});
-		};
-	};
-	//滑动点击操作(循环or不循环)
-	if(this.loop){
-		this.btnP.bind("click",function(){
-			if(that.c<=0){
-				that.c = that.l-1;
-				that.box.css({left:-that.c*that.w});		
-			};
-			that.c --;
-			that.move(1);
-		});
-		this.btnN.bind("click",function(){
-			if(that.c>=(that.l-1)){
-				that.box.css({left:0});		
-				that.c = 0;
-			};
-			that.c++;
-			that.move(1);
-		});
-	}else{
-		this.btnP.bind("click",function(){
-			that.c> 0? that.c--:that.c=that.maxL ;
-			that.move(1);
-		});
-		this.btnN.bind("click",function(){
-			that.c<that.maxL ?that.c++:that.c=0;
-			that.move(1);
-		});
-	};
-	that.timer = null;
-	if(o.auto){
-		that.box.bind("mouseover",function(){
-			clearInterval(that.timer);
-		});
-		that.box.bind("mouseleave",function(){
-			that.autoPlay();
-		});
-		that.autoPlay();
-	};
-	this.move();
-}
-ShowPre.prototype = {
-	move:function(test){ //滑动方法
-		var that = this;
-		var pos = this.c*this.w;
-		//document.title = (test&&that.timer);
-		if(test&&that.timer){
-			clearInterval(that.timer);
-		};
-		//当前序号图标
-		if(that.numIco){ 
-			that.numIcoLi.removeClass("on");
-			var numC = that.c;
-			if(that.loop&&(that.c==(this.l-1))){
-				numC= 0;	
-			};
-			that.numIcoLi.eq(numC).addClass("on");
-		};
-		this.box.stop();
-		this.box.animate({left:-pos},function(){
-			if(test&&that.auto){
-				that.autoPlay();
-			};
-			if(that.loop&&that.c==that.maxL){
-				that.c = 0;
-				that.box.css({left:0})
-			};
-		});
-		if(that.bigBox)return false;
-		//设置大图加载序号
-		if(that.loadNumBox){
-			var loadC = parseInt(that.c)+1;
-				loadC = loadC<10?"0"+loadC:loadC;
-				that.loadNumBox.html(loadC);
-		};
-	},
-	loadImg:function(test){ //加载大图方法
-		var that = this;
-		var _src = this.li.eq(that.loadNum).attr("bsrc"),bigTh3=null,bigTh4=null,bigText=null;
-		if(that.li.eq(that.loadNum).attr("data-h")){
-			//$("#bigT h3").html(that.li.eq(that.loadNum).attr("data-h"));
-			var bigTh3 = $("#bigT h3");
-			$("#bigT").hide();
-			bigTh3.html("");
-		};
-		if(that.li.eq(that.loadNum).attr("data-m")){
-			//$("#bigT h4").html(that.li.eq(that.loadNum).attr("data-m"));
-			var bigTh4 = $("#bigT h4");
-			$("#bigT").hide();
-				bigTh4.html("");
-		};
-		if(that.li.eq(that.loadNum).attr("data-text")){
-			//$("#bigText").html(that.li.eq(that.loadNum).attr("data-text"));
-			var bigText = $("#bigText");
-				bigText.html("").hide();
-		};
-		var img = new Image();
-			$(img).hide();
-			//loading dom操作(分首次加载和后面加载，根据点击操作设置运动方向)
-			if(that.deInit){
-				var le = 0;
-				that.deInit = false;
-				that.bigBox.html("<div class='loading'></div><div class='loading'></div>");
-			}else{
-				if(test!="pre"){
-					var le = -1230;
-					that.bigBox.append("<div class='loading'></div>");
-				}else{
-					var le = 1230;
-					that.bigBox.find(".loading").before("<div class='loading'></div>");
-					that.bigBox.css({"margin-left":-1230});
-					le = 0;
-				};				
-			};
-			that.bigBox.animate({"margin-left":le},function(){
-				$(img).bind("load",function(){
-					//判断出现方向
-					if(test!="pre"){
-						var n = 1,oldN = 0;
-					}else{
-						var n = 0,oldN = 1;
-					};
-					that.bigBox.find(".loading").eq(n).html(img);
-					that.bigBox.find(".loading").eq(oldN).remove();
-					that.bigBox.css({"margin-left":0});
-					$(this).fadeIn(200,function(){
-						if(bigTh3){
-							$("#bigT").fadeIn()
-							bigTh3.html(that.li.eq(that.loadNum).attr("data-h"));
-						};
-						if(bigTh4){
-							$("#bigT").fadeIn()
-							bigTh4.html(that.li.eq(that.loadNum).attr("data-m"));
-						};
-						if(bigText){
-							bigText.html(that.li.eq(that.loadNum).attr("data-text")).fadeIn();
-						};
-					});
-				});
-				img.src = _src;
-			});
-			//添加当前加载序号
-			that.li.removeClass("on");
-			that.li.eq(that.loadNum).addClass("on");
-			if(that.loadNumBox){
-				var loadC = parseInt(that.loadNum)+1;
-					loadC = loadC<10?"0"+loadC:loadC;
-					that.loadNumBox.html(loadC);
-			};
-	},
-	autoPlay:function(){ //自动播放方法
-		var that =this;
-		that.timer = setInterval(function(){
-			that.c<that.maxL?that.c++:that.c=0;
-			that.move();
-		},4000);
-	}
-}
-
-/** 回到顶部 **/
-function gotop(){
-    var gotop = '<div class="gotop"></div>';
-    $("body").append(gotop);
-    $(".gotop").click(function(){$('html, body').animate({scrollTop:0}, 700);});
-    var min_height = 200;
-    $(window).scroll(function(){
-        var s = $(window).scrollTop();
-        if(s > min_height){
-            $(".gotop").fadeIn(100);
-        }else{
-            $(".gotop").fadeOut(100);
-        };
-    });
-};
-
-/** 加载地区 */
-function area(){
-	var pid, cid, aid;
-	$("#province").change(function(){
-		pid = $(this).val();
-		next(pid, "#city");
-	});
-	$("#city").change(function(){
-		cid = $(this).val();
-		next(cid, "#area");
-	});
-}
-function next(id, htmlid){
-	if(id == null || isNaN(id) || id == "") {
-		$("#city").empty().append('<option value="">地级市</option>');
-		$("#area").empty().append('<option value="">市、县级市、县</option>');
-		return;
-	}
-	$.get(wbdcnf.base + "/area/next.jhtml",
-		{"id" : id},
-		function(data){
-			$(htmlid).empty();
-			if(htmlid == "#city") {
-				$("#city").empty().append('<option value="">地级市</option>');
-			}else{
-				$("#area").empty().append('<option value="">市、县级市、县</option>');
-			}
-			if(data == null || data.length == 0)
-				$(htmlid).hide();
-			else
-				$(htmlid).show();
-			$(data).each(function(index){
-				$(htmlid).append('<option value="' + data[index].id + '">' + data[index].name + '</option>');
-				if(index == 1 && htmlid == "#city")
-					next(data[index].id, "#area");
-			});
-	});
-}
-
-/**
- * 登录信息
- */
-function loginMsg(userName, userHead) {
-	if(!userName) {
-		userHead = getCookie("memberHead");
-		userName = getCookie("memberName");
-		userEmail = getCookie("memberEmail");
-	}
-	if (userName != null || userEmail != null) {
-		if(userName == null || userName == "")
-			userName = "我的五百丁";
-		$("#login").hide(); // 登录按钮
-		$("#register").hide(); // 注册按钮
-		$("#login-register").hide(); // 登录和注册间隔符
-		$("#userName").text(userName).show(); // 显示名称
-		$("#userHead").show().find("img").attr("src", userHead); // 显示头像
-		$("#window_dialog").remove(); // 移除登录窗口
-		if(next_url) // 跳转到下一个页面
-			location.href = next_url;
-		if(add_login_success)
-			loginSuccess();
-		$("#user_logout").show().click(function(){ // 登出按钮事件
-			loginOut();
-		});
-	} else {
-		$("#login").show(); // 登录按钮显示
-	}
-}
-/**
- * 登录成功调用该函数
- */
-function loginSuccess() {
-}
-/**
- * 注销登录
- */
-var logoutrefresh = false; // 是否刷新页面
-function loginOut() {
-	$.get(wbdcnf.base + "/logout.jhtml", function(data){
-		if(data.type == "success") {
-			$("#userHead").hide(); // 头像隐藏
-			$("#userName").hide(); // 用户名隐藏
-			$(".ul_top_user").hide(); // 用户操作菜单隐藏
-			$(".m-top_user").hide(); // 用户操作菜单隐藏
-			
-			$("#login").show(); // 显示登录按钮
-			$("#register").show(); // 显示注册按钮
-			$("#login-register").show(); // 显示注册和登录间隔符
-			cartSize(); // 计算购物车
-			var synarr = $(data.content); // 同步登出论坛
-			synarr.each(function(index, ele) {
-			    $.getScript(ele.src, function(){});
-			});
-			// removeCookie("memberName", {expires : 0});
-			// removeCookie("memberEmail", {expires : 0});
-			if(logoutrefresh)
-				location.reload();
-		} else {
-			var loaded = 0;
-			var synarr = $(data.content);
-			if(data.content != "" && synarr.length > 0) {
-				synarr.each(function(index, ele) {
-					$.getScript(ele.src, function(){
-						if (++loaded == synarr.length) {
-							location.href = wbdcnf.base + "/";
-						}
-					}).fail(function() {
-						location.href = wbdcnf.base + "/";
-				    });
-				});
-			} else {
-				location.href = wbdcnf.base + "/";
-			}
-		}
-	});
-}
-var next_url = null; // 跳转URL
-var add_login_success = false; // 添加登录成功函数
-/**判断是否登录未登录弹窗*/
-function isLogin(url, add_login_function){
-	if($.checkLogin()) {
-		return true;
-	} else {
-		if(url)
-			next_url = url;
-		if(add_login_function)
-			add_login_success = add_login_function;
-		var bh = $("body").height();
-		var bw = $("body").width();
-		$("<div id=\"window_dialog\"></div>").css({"height":bh,"width":bw}).appendTo("body").load(wbdcnf.base + "/login/window.jhtml");
-		return false;
-	}
-}
-
-/**
- * 文件大小验证
- */
-function checkSize(file, showAlert, max_size) {
-	if(!max_size)
-		max_size = 3;
-	var max_file_size = max_size * 1024 * 1024;
-	if(file && file.files && file.files[0] && file.files[0].size) {
-		var size = file.files[0].size;
-		if(size > max_file_size) {
-			if(showAlert)
-				alert("上传图片文件过大，请上传小于" + max_size + "M的文件！");
-			return false;
-		}
-	}
-	return true;
-}
-
-/**
- * 百度推送
- */
-function baiduPoster() {
-    var bp = document.createElement('script');
-    bp.src = '//push.zhanzhang.baidu.com/push.js';
-    var s = document.getElementsByTagName("script")[0];
-    s.parentNode.insertBefore(bp, s);
-}
-
-function getHeadNavIndex() {
-	return -1;
-}
-$(document).ready(function() {
-	var headNavIndex = getHeadNavIndex();
-	if (headNavIndex > -1)
-		$(".jl-nav .nav-li").removeClass("current").eq(headNavIndex).addClass("current");
-	var $liCur = $(".jl-nav ul .nav-li.current");
-	if ($liCur && $liCur.position())
-		var curP = $liCur.position().left;
-	var curW = $liCur.outerWidth(true),
-		$slider = $(".jl-nav-curBg"),
-		$navBox = $(".jl-nav");
-	$targetEle = $(".jl-nav ul .nav-li a"),
-		$slider.animate({
-			"left": curP,
-			"width": curW
-		});
-	$targetEle.mouseenter(function() {
-		var $_parent = $(this).parent(),
-			_width = $_parent.outerWidth(true),
-			posL = $_parent.position().left;
-		$slider.stop(true, true).animate({
-			"left": posL,
-			"width": _width
-		}, "fast");
-	});
-	$navBox.mouseleave(function(cur, wid) {
-		cur = curP;
-		wid = curW;
-		$slider.stop(true, true).animate({
-			"left": cur,
-			"width": wid
-		}, "fast");
-	});
-});
+//全站公共js库
+$(document).ready(function(e) {
+	$(".js_cell_case").click(function(){
+		console.log(0);
+		url = $(this).attr("data-url"); // 要加载的iframe
+		title = $(this).attr("data-name");
+		art.dialog.open(url,{
+			lock: true,
+			title: title ,
+			width:900,
+			drag:false,
+			opacity:0.3,
+			background:"#000",
+			height: 500
+		});
+	});
+	<!--设置案例宽度-->
+	var len = $("#js_wrap_case").children().length;
+	$("#js_wrap_case").css({"width":len*1000});
+	
+	<!--切换案例-->
+	$("#js_tips span").hover(function(){
+		var index = $(this).index();
+		$(this).addClass("focus").siblings().removeClass("focus");
+		
+		
+		$("#js_wrap_case").children().eq(index).addClass("focus").siblings().removeClass("focus");
+		
+		var index = $(this).index();
+		$("#js_wrap_case").css({
+			"left": -index*1000
+		});
+		console.log()
+	});
+	
+	$(function(){
+		$('#js_fullpage').fullpage({
+			slidesColor: ['#212325', '#fff', '#212325', '#ebfbff'],
+			anchors: ['page1', 'page2', 'page3', 'page4'],
+			menu: '#menu',
+			afterRender:function(){
+				$('#js_fullpage').find(".active").addClass("focus");
+			},
+			afterLoad:function(anchorLink ,index){ // 滚动结束后
+				$('#js_fullpage').children().eq(index-1).addClass("focus");
+			},
+			onLeave:function(anchorLink ,index){ // 滚动前
+				$('#js_fullpage').children().removeClass("focus");
+			}
+		});
+	});
+	
+	
+    //section的首尾增加选择器
+    $(".section").each(function(index, element) {
+        $(this).children().first().addClass("first");
+		$(this).children().last().addClass("last");
+    });
+});
+
+var common = {
+	//返回浏览器宽高
+	getViewSize : function (){
+		var de=document.documentElement;
+		var db=document.body;
+		var viewW=de.clientWidth==0 ? db.clientWidth : de.clientWidth;
+		var viewH=de.clientHeight==0 ? db.clientHeight : de.clientHeight;
+		/* 
+			返回一个数组参数，第一个是浏览器宽度，第二个是浏览器宽度
+			调用方法：
+			var screenW = getViewSize()[0]; // 浏览器宽度
+			var screenH = getViewSize()[1]; // 浏览器高度
+		*/
+		return Array(viewW,viewH);
+	},
+	
+	//基于当前界面的水平垂直居中
+	vhCenter : function (para){
+		var screenW = $(para).parent().width(); // 浏览器宽度
+		var screenH = $(para).parent().height(); // 浏览器高度
+		
+		var paraW = $(para).width(); // 元素宽度
+		var paraH = $(para).height(); // 元素高度
+		
+		var scrollTop = $(document).scrollTop(); //浏览器滚动条顶部值
+		var scrollLeft = $(document).scrollLeft(); //浏览器滚动条左边距值
+		
+		var top = 0;
+		var left = 0;
+		
+		//根据浏览器宽高来设定指定容器针对浏览器视图进行居中
+		if(screenW < paraW){
+			left = 0;
+		}else{
+			left = (screenW - paraW )/2 + scrollLeft;
+		}
+		
+		if(screenH < paraH){
+			top = 0;
+		}else{
+			top = (screenH - paraH )/2 + scrollTop;
+		}
+		
+		$(para).css({
+			"position" : "absolute",
+			"left" : left,
+			"top" : top
+		});
+	}
+	
+}
+
+
+var xlc = {
+	/**鼠标移入背景滑动
+		文档格式
+		<ul id="jq_nav">
+			<li class="js_focus"></li>
+			<li id="js_navbg"></li>
+		<ul>
+		obj 为ul对象 direct 指定'上下'或'左右'移动 easing 为动画 "easeOutElastic"
+	*/
+	navHover : function(obj , direct , easing){
+		var nav = $(obj); // 导航
+		
+		var navChildren = nav.children().not("#js_navbg");
+		var navbg = $(obj + " > #js_navbg"); //导航背景
+		var focusIndex = $(obj + " > .js_focus").index();
+		
+		navChildren.mouseover(function(e) { //鼠标移入移出时变换位置
+			var index = $(this).index();
+			setPositionNum(index);
+		}).mouseleave(function(e) {
+			var index = $(".js_focus").index();
+			setPositionNum(index);
+		});
+		
+		$(document).ready(function(){
+			setPositionNum (focusIndex);
+		});
+		function  setPositionNum(index){
+			var nowNavItem = navChildren.eq(index).outerWidth(true);
+			
+			if(direct == "left"){
+				//设置左右移动
+				var leftPosition = 0;
+				for (var i = 0 ; i <= index ; i++){
+					if(i == index){
+						var lastWidth = (navChildren.eq(i).outerWidth(true) - nowNavItem) / 2;
+						leftPosition += lastWidth;
+					}else{
+						leftPosition += parseInt(navChildren.eq(i).outerWidth(true)); // 循环获取要移动的距离
+					}
+				}
+				
+				$(navbg).stop().animate({
+					"left" : leftPosition ,
+					"width" : nowNavItem
+				} , 800,easing);
+			}else{
+				//设置上下移动
+				var topPosition = 0;
+				for (var i = 0 ; i <= index ; i++){
+					if(i == index){
+						var lastHeight = (parseInt(navChildren.eq(i).outerHeight(true)) - nowNavItem)/2;
+						topPosition += lastHeight ;
+					}else{
+						topPosition += parseInt(navChildren.eq(i).outerHeight(true)); // 循环获取要移动的距离
+					}
+				}
+				$(navbg).stop().animate({
+					"top" : topPosition ,
+					"width" : nowNavItem
+				},800,easing);
+			}
+		}
+	},
+	/**弹出框，基于jquery的load方法
+	*/
+	/*
+		关闭弹出窗
+		调用 xlc.closeDialog();
+	*/
+	closeDialog :function(){
+		$("#js_dialogContainer").hide(); // 弹出框里面清除内容并隐藏
+		$(".zzdiv").fadeOut(200); // 遮罩隐藏
+	},
+	dialog : function(url , submitFn , callbackFn){
+		var closeDialog ={
+			/* 
+			关闭弹出框
+				方法内调用 closeDialog.closeDialog();
+			*/
+			closeDialog : function(){ 
+				$("#js_dialogContainer").hide(); // 弹出框里面清除内容并隐藏
+				$(".zzdiv").fadeOut(200); // 遮罩隐藏
+			}
+		} 
+		
+		var len = $("#js_dialogContainer").length; // 获取弹出框的数量
+		var zzLen = $(".zzdiv").length; // 遮罩数量
+		
+		/*初始化*/
+		/*1.如果弹出框容器在界面里面没有，则新增一个弹出框容器*/
+		if(len <= 0){
+			var contain = $("<div class='dialogContainer' id='js_dialogContainer'></div>");
+			$("body").append(contain);
+		}
+		
+		/*1.如果遮罩在界面里面没有，则新增遮罩*/
+		if(zzLen <= 0){
+			var zz = $("<div class='zzdiv'></div>");
+			$("body").append(zz);
+			
+		}
+		
+		//关闭弹出框
+		$(".js_close").live("click",function(){
+			closeDialog.closeDialog(); // 关闭弹出框
+		});
+		
+		//弹出框提交
+		$(".js_submit").live("click",function(){
+			//回调函数，弹出框弹出之后执行的方法
+			if ($.isFunction(submitFn)) {
+				submitFn.apply(this);
+			}
+		});
+		
+		//弹出框内容加载，根据传进来的url来改变弹出框的内容
+		$("#js_dialogContainer").load(url,function(){
+			//回调函数，弹出框弹出之后执行的方法
+			if ($.isFunction(callbackFn)) {
+				callbackFn.apply(this);
+			}
+			
+			//弹出框水平垂直居中
+			common.vhCenter("#js_dialogContainer");
+			
+			//弹出框渐显
+			$("#js_dialogContainer").fadeIn(200);
+			//遮罩渐显
+			$(".zzdiv").fadeIn(200);
+			
+			//浏览器改变大小重定位弹出框
+			$(window).resize(function(e) {
+				common.vhCenter("#js_dialogContainer");
+			});
+			
+			//浏览器滚动重定位弹出框
+			$(window).scroll(function(e) {
+				common.vhCenter("#js_dialogContainer");
+			});
+			
+		});
+		
+	},
+	
+	//轮播
+	tabList : function(container_slide , events , focusClass , autoPlay , autoTime){
+		
+		/*var defaults = {
+			container_slide : // 轮播最外层的div容器
+			events : "click", // 指示器切换时的事件
+			focuclass : "focus", // 指示器的选中状态class名称
+			autoPlay : false, // 是否自动播放
+			autoTime : 4000 // 自动播放时间
+		}*/
+		
+		var slideWrap_items = $(container_slide).find(".js_slideWrap"); //轮播焦点容器
+		var slideTip = $(container_slide).find(".js_slideTip"); // 轮播指示器容器
+		var tabListFn ={
+			changeFn : function(index){//切换方法
+				// 指示器切换
+				slideTip.children().eq(index).addClass(focusClass).siblings().removeClass(focusClass);
+				
+				//焦点图切换
+				slideWrap_items.children().eq(index).stop(true,true).fadeIn().siblings().fadeOut();
+				var src = slideWrap_items.children().eq(index).find("a > img").attr("data-imgsrc");
+				if(src != "undefined" ){
+					slideWrap_items.children().eq(index).find("a > img").attr("src" , src);
+				}
+			}
+		}
+		
+		//初始化
+		//初始化1.选项卡第一个标题增加选中状态
+		//初始化2.选项卡对应的第一个内容块显示,其他隐藏
+		var index = 0 ; // 用来定位当前显示第几张焦点图
+		index = 0 ; // 自动轮播时,会把第一张也计算进去,所以自动的数量从1开始
+		slideWrap_items.children().eq(0).show();
+		tabListFn.changeFn(0);
+		
+		
+		var itemlen = slideWrap_items.children().length; // 根据焦点图长度来进行第一个和最后一个焦点图时的处理
+		var autoPlay = autoPlay; // 如果为true,则自动播放,否则不自动播放
+		
+		//如果为true则自动播放
+		if(autoPlay){
+			var picTimer;
+			
+			//鼠标滑上焦点图时停止自动播放，滑出时开始自动播放
+			$(container_slide).hover(function() {
+				clearInterval(picTimer);
+			},function() {
+				picTimer = setInterval(function() {
+					tabListFn.changeFn(index);
+					index++;
+					if(index == itemlen) {index = 0;}
+				},autoTime); //autoTime代表自动播放的间隔，单位：毫秒
+			}).trigger("mouseleave");
+		}
+		
+		// 上一个
+		$(container_slide).find(".js_last").click(function(){
+			index--;
+			if(index < 0){
+				index = itemlen -1 ;
+			}
+			tabListFn.changeFn(index);
+			
+		});
+		
+		// 下一个的切换
+		$(container_slide).find(".js_next").click(function(){
+			index++;
+			if(index >= itemlen){
+				index = 0;
+			}
+			tabListFn.changeFn(index);
+			
+		});
+		
+		//鼠标事件,进行切换
+		//指示器事件进行相应的切换
+		slideTip.children().bind(events ,function(){
+			index = $(this).index();
+			tabListFn.changeFn(index);
+		});
+		
+	},
+	
+	//全选全不选，para 是全选按钮，selectClass 为带选中标志的选择框，onselect 为选中后添加选中标志 , selectAll("#selectAll",".jq_Select","jq_onselect" , menuState);
+	selectAll : function ( para, selectClass, onselect ,  callbackEvent) {
+		$(para).live("change", function () {
+			var flag = true; //复选框全部处于选中状态的时候，为true
+			
+			$(selectClass).each(function () {//遍历所有的复选框，判断复选框的选中状态
+				if(!$(this).prop("disabled")){
+					if (!$(this).prop("checked") || !$(this).hasClass(onselect)) {
+						flag = false;
+					}
+				}
+			});
+			
+			if (flag) {
+				//如果全部是选中的
+				$(selectClass).each(function(index, element) {
+					if(!$(this).prop("disabled")){
+						$(selectClass).prop("checked", false).removeClass(onselect); //则全部取消选择
+					}
+                });
+				$(para).prop("checked", false);
+			} else {
+				//如果全部是选中的
+				$(selectClass).each(function(index, element) {
+					if(!$(this).prop("disabled")){
+						$(this).prop("checked", true).addClass(onselect); ; //只要不是全部选择的，则把所有的复选框都选中
+					}
+                });
+				
+				$(para).prop("checked", true);
+			}
+	
+			if ($.isFunction(callbackEvent)) {
+				callbackEvent(); //回调函数，这里用来处理点击后的事件
+			}
+		});
+	},
+	
+	//把某个元素变为fixed
+	setFixed : function(para,options){
+		/*默认参数*/
+		var defaultOptions = {
+			para : $(para),
+			addclassname : "fixed" ,
+			parentClass : "isfixed"
+		}
+		var obj = $.extend(defaultOptions,options);
+		_this = obj.para;
+		
+		obj.para.each(function(){
+			var _this = $(this); // 需要固定位置的选择器
+			var	_top = parseInt(_this.offset().top); // 获取对象的顶部距离
+			var _thisHeight = parseInt(_this.outerHeight()); // 获取对象的高度
+			var _parentPaddingTop = parseInt(_this.parent().css("paddingTop")); // 获取父元素的paddingtop
+			
+			$(window).scroll(function(e) {
+				
+            	var topScroll = parseInt($(window).scrollTop()); // 滚动时获取浏览器滚动条高度
+				if(topScroll > _top){ // 如果滚动条高度大于对象顶部距离,则让对象变成固定定位
+					_this.addClass(obj.addclassname);
+					_this.parent().addClass(obj.parentClass );
+				}else{ // 否则为相对定位
+					_this.removeClass(obj.addclassname);
+					_this.parent().removeClass(obj.parentClass );
+				}
+        	});
+		});
+		
+	},
+	
+	//返回顶部 需要单独给 .gotop 写样式
+	gotoTop : function(){
+		var goToKength = $("#js_gotop").length;
+		var topScroll = $(window).scrollTop();
+		
+		if(goToKength <= 0){
+			var gotop = $("<span class='gotop' id='js_gotop'></span>");
+			gotop.appendTo("body");
+		}
+		
+		startGotop(topScroll);
+		$(window).scroll(function(){
+			startGotop();
+		});
+		
+		//点击跳转到顶部
+		$("#js_gotop").click(function(){
+			$("body,html").animate({scrollTop:0},300);
+		});
+		
+		//返回顶部隐藏显示方法
+		function startGotop(scrollTop){
+			scrollTop = $(window).scrollTop();
+			if (scrollTop > 100){
+				$("#js_gotop").fadeIn(500);
+			}
+			else{
+				$("#js_gotop").fadeOut(500);
+			}
+		}
+	},
+	//输入框输入提示
+	inputTip :function (){
+		var textIpt = $("input[type='text'] , textarea");
+		textIpt.each(function(){
+			if(!$(this).hasClass("js_notip")){
+				$(this).attr("autocomplete","off");
+				var value = $(this).val();
+				$(this).blur(function(e) {
+					if($(this).val() == "" || $(this).val() == " " ){
+						$(this).val(value);
+					}
+				}).focus(function(){
+					if($(this).val() == "" || $(this).val() == " " || $(this).val() == value){
+						$(this).val("");
+					}
+				});
+			}
+		});
+	},
+	//选项卡切换
+	/*
+		tabTitle 选项卡容器
+		tabContainer 选项卡对应的内容容器
+		events 出发切换的事件
+		focusClass 选中的class名称
+	*/
+	tabChange : function(tabTitle , tabContainer , events , focusClass){
+		$(tabContainer).children().eq(0).show().siblings().hide(); // 选项卡内容显示第一个,其他隐藏
+		$(tabTitle).children().bind(events,function(){ // 切换事件
+			var index = $(this).index(); // 获取当前点击的选项卡索引值
+			if(focusClass == undefined){
+				focusClass = "focus";
+			}else{ 
+				$(tabTitle).children().eq(index).addClass(focusClass).siblings().removeClass(focusClass); //对应的选项卡添加选中class
+			}
+			$(tabContainer).children().eq(index).show().siblings().hide(); // 索引值对应的选项卡内容显示,其他隐藏
+		});
+	},
+	
+	//鼠标移动改变元素位置
+	changePosition : function (para , Range) {
+		var mousex;
+		var mousey;
+		
+		$(para).each(function(){
+			var para = $(this);
+			var left = parseInt(para.css("left"));
+			var top = parseInt(para.css("top"));
+			
+			$("body").mousemove(function(e) {
+				var e = e || window.event;
+				var mousex = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft ;
+				var mousey = e.clientY + document.body.scrollTop + document.documentElement.scrollTop ;
+				
+				var newLeft = (mousex - left) / Range + left;
+				var newTop = (mousey - top) / Range + top
+				para.stop().animate({
+					"left" : newLeft,
+					"top" : newTop
+				},20);
+				
+			});
+		});
+		
+	}
+	
+}
