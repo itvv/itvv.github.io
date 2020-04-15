@@ -1,0 +1,21 @@
+[{
+    "id": 1,
+    "name": "简约而不简单",
+    "picUrl": "/static/banner/b1.png"
+  },
+  {
+    "id": 2,
+    "name": "坚持做更好的自己",
+    "picUrl": "/static/banner/b2.png"
+  },
+  {
+    "id": 3,
+    "name": "余生在别处",
+    "picUrl": "/static/banner/b3.png"
+  },
+  {
+    "id": 4,
+    "name": "时间的见证",
+    "picUrl": "/static/banner/b4.png"
+  }
+]

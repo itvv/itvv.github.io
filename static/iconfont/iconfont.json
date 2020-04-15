@@ -1,0 +1,30 @@
+{
+  "id": "1756437",
+  "name": "kfape",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon",
+  "description": "Hello,world!",
+  "glyphs": [
+    {
+      "icon_id": "14092618",
+      "name": "aboutus",
+      "font_class": "aboutus",
+      "unicode": "e603",
+      "unicode_decimal": 58883
+    },
+    {
+      "icon_id": "14092540",
+      "name": "my",
+      "font_class": "my",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "14092541",
+      "name": "home",
+      "font_class": "home",
+      "unicode": "e602",
+      "unicode_decimal": 58882
+    }
+  ]
+}
